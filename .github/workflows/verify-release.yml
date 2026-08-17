@@ -1,0 +1,93 @@
+name: Verify release assets
+
+# A published release is the one artifact we cannot correct after a customer has downloaded it, and
+# nothing between the build job and here re-reads what actually landed. This downloads the release
+# we just cut and proves it is complete and intact: a truncated upload, a dropped platform, or a
+# checksums file that does not describe the binaries beside it all look fine on the releases page.
+#
+# The build itself lives with the source, in a different repository. This job deliberately trusts
+# none of it and re-checks the published bytes.
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Release tag to verify, for example connector-v0.1.0'
+        required: true
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: verify published assets
+    runs-on: ubuntu-latest
+    steps:
+      - name: Work out the tag
+        id: tag
+        run: |
+          set -euo pipefail
+          if [ "${{ github.event_name }}" = "release" ]; then
+            echo "value=${{ github.event.release.tag_name }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "value=${{ inputs.tag }}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Download what was published
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p assets
+          cd assets
+          gh release download "${{ steps.tag.outputs.value }}" --repo "${{ github.repository }}"
+          ls -l
+
+      - name: Every advertised platform is there
+        working-directory: assets
+        run: |
+          set -euo pipefail
+          # Named explicitly rather than counted: the README advertises these five files, and a
+          # release missing one is a customer on that platform with nothing to download. A missing
+          # input has to fail loudly — skipping it is how four-of-five ships unnoticed.
+          missing=0
+          for f in dojo-connect-darwin-arm64 \
+                   dojo-connect-darwin-amd64 \
+                   dojo-connect-linux-amd64 \
+                   dojo-connect-linux-arm64 \
+                   dojo-connect-windows-amd64.exe \
+                   checksums.txt; do
+            if [ ! -f "$f" ]; then
+              echo "::error::$f is missing from this release"
+              missing=1
+            fi
+          done
+          [ "$missing" -eq 0 ]
+
+      - name: The checksums describe the binaries beside them
+        working-directory: assets
+        run: |
+          set -euo pipefail
+          # No --ignore-missing. It would skip any entry whose file did not arrive, which is
+          # precisely the failure this step exists to catch.
+          sha256sum -c checksums.txt
+
+          # And the file has to cover every binary, not only the ones it happens to list: a
+          # checksums.txt naming one file passes `-c` and proves nothing about the other four.
+          listed=$(grep -c 'dojo-connect-' checksums.txt)
+          present=$(ls dojo-connect-* | wc -l)
+          echo "listed=$listed present=$present"
+          if [ "$listed" -ne "$present" ]; then
+            echo "::error::checksums.txt lists $listed binaries but $present were published"
+            exit 1
+          fi
+
+      - name: The Linux build starts
+        working-directory: assets
+        run: |
+          set -euo pipefail
+          # The only artifact this runner can execute. A binary that downloads cleanly and will not
+          # run is still a broken release, and cross-compiled output is where that happens.
+          chmod +x dojo-connect-linux-amd64
+          ./dojo-connect-linux-amd64 --version
