@@ -8,6 +8,7 @@
   <a href="https://github.com/chargerdojo/dojo-connect/releases/latest"><img alt="Latest release" src="https://img.shields.io/github/v/release/chargerdojo/dojo-connect?label=release&color=2e7d32"></a>
   <img alt="Platforms" src="https://img.shields.io/badge/platforms-macOS%20%7C%20Linux%20%7C%20Windows-2e7d32">
   <a href="https://docs.chargerdojo.com/guide/connect-a-local-endpoint"><img alt="Docs" src="https://img.shields.io/badge/docs-connect%20a%20local%20endpoint-0288d1"></a>
+  <a href="https://github.com/chargerdojo/dojo-connect/blob/main/LICENSE"><img alt="Licence" src="https://img.shields.io/badge/licence-proprietary-555"></a>
   <a href="https://chargerdojo.com"><img alt="ChargerDojo" src="https://img.shields.io/badge/chargerdojo.com-informational?color=555"></a>
 </p>
 
