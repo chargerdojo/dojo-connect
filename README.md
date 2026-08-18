@@ -20,33 +20,55 @@ your service is never reachable from the internet at any point.
 
 This repository holds the released binaries. The source is not here.
 
-## ⬇️ Download
+## ⬇️ Install
 
-Grab the build for your machine from the [latest release](https://github.com/chargerdojo/dojo-connect/releases/latest).
+Pick your platform. Each block downloads the binary, checks it against the published checksum, and
+puts it on your `PATH` so every later command is just `dojo-connect`.
 
-| Platform | File |
-| --- | --- |
-| 🍎 macOS, Apple silicon | `dojo-connect-darwin-arm64` |
-| 🍎 macOS, Intel | `dojo-connect-darwin-amd64` |
-| 🐧 Linux, x86-64 | `dojo-connect-linux-amd64` |
-| 🐧 Linux, arm64 | `dojo-connect-linux-arm64` |
-| 🪟 Windows, x86-64 | `dojo-connect-windows-amd64.exe` |
-
-Every release carries `checksums.txt`. Check your download against it first:
+**🍎 macOS, Apple silicon** (Intel: swap `darwin-arm64` for `darwin-amd64`):
 
 ```sh
-sha256sum -c checksums.txt --ignore-missing
+curl -fsSLO https://github.com/chargerdojo/dojo-connect/releases/latest/download/dojo-connect-darwin-arm64
+curl -fsSLO https://github.com/chargerdojo/dojo-connect/releases/latest/download/checksums.txt
+shasum -a 256 --ignore-missing -c checksums.txt
+sudo install -m 755 dojo-connect-darwin-arm64 /usr/local/bin/dojo-connect
 ```
 
-## 🔓 First run
+**🐧 Linux, x86-64** (arm64: swap `linux-amd64` for `linux-arm64`):
 
-The binaries are not code signed yet, so the first run needs one extra step.
+```sh
+curl -fsSLO https://github.com/chargerdojo/dojo-connect/releases/latest/download/dojo-connect-linux-amd64
+curl -fsSLO https://github.com/chargerdojo/dojo-connect/releases/latest/download/checksums.txt
+sha256sum --ignore-missing -c checksums.txt
+sudo install -m 755 dojo-connect-linux-amd64 /usr/local/bin/dojo-connect
+```
 
-| | |
-| --- | --- |
-| 🍎 **macOS** | Blocks an unsigned download. Right-click the file and choose Open, or run `xattr -d com.apple.quarantine ./dojo-connect` |
-| 🪟 **Windows** | SmartScreen shows a warning. Choose "More info", then "Run anyway" |
-| 🐧 **Linux** | `chmod +x ./dojo-connect` |
+**🪟 Windows, x86-64**, in PowerShell:
+
+```powershell
+Invoke-WebRequest https://github.com/chargerdojo/dojo-connect/releases/latest/download/dojo-connect-windows-amd64.exe -OutFile dojo-connect.exe
+```
+
+Check it worked:
+
+```sh
+dojo-connect --version
+```
+
+Every build is on the [latest release](https://github.com/chargerdojo/dojo-connect/releases/latest)
+page if you would rather download by hand.
+
+> [!IMPORTANT]
+> **On macOS, download with `curl` rather than a browser.** We do not sign the binaries yet, so a
+> browser marks the file as quarantined and macOS kills the first run without printing anything:
+> no dialog, no error, just an exit code. If that has already happened, clear the mark and run it
+> again:
+>
+> ```sh
+> xattr -d com.apple.quarantine <file>
+> ```
+>
+> On Windows, SmartScreen warns instead: choose **More info**, then **Run anyway**.
 
 ## ▶️ Run it
 
